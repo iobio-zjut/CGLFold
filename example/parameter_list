@@ -1,0 +1,15 @@
+# =============== Paremeters of CGLFold ===============
+# Parameter_name		Parameter_value
+#
+# =============== Conformation search ===============
+NP			200
+G			800
+KTc			4
+Only_Global		0
+#
+# ========== DE search for disturbance angle ==========
+NP2			50
+G2			50
+F			0.5
+CR			0.5
+KTl			1
