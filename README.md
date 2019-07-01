@@ -30,11 +30,11 @@ and extract it to ``"~/"`` directory.
  $ ./scons.py -j<NumOfJobs> mode=release bin
 ```
 
-- If you want to recompile CGLFold source code, use the following commands:  
+- If you want to recompile CGLFold source code, use the following commands:
 
 ```
-$ cd ~/CONFold/  
-$ g++ -o bin/CGLFold src/CGLFold.cpp  
+$ cd ~/CONFold/
+$ g++ -o bin/CGLFold src/CGLFold.cpp
 ```
 ## 2. INPUT
 CGLFold requires four files to generate models:
