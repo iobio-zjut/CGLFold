@@ -21,7 +21,7 @@ Please Follow the below steps to install and configure CGLFold:
 - Download Rosetta3.10 source package from https://www.rosettacommons.org/software/ 
 and extract it to ``"~/"`` directory.
 
-- Copy and paste source code of ``"ClassicAbinitio.cc"``, ``"ClassicAbinitio.hh"``,   ``"LJAngleRotation.cc"``, ``"LJAngleRotation.hh"``, and ``"LJAngleRotation.fwd.hh"`` from ``"src/"`` folder in CGLFold package to ``"~/Rosetta/main/source/src/protocols/abinitio/"`` folder in Rosetta. Copy and paste configuration file `` "protocols_b_6.src.settings" `` from ``"src/"`` folder in CGLFold package to ``"~/Rosetta/main/source/src/"`` folder in Rosetta.
+- Copy and paste source code of ``"ClassicAbinitio.cc"``, ``"ClassicAbinitio.hh"``,   ``"LJAngleRotation.cc"``, ``"LJAngleRotation.hh"``, and ``"LJAngleRotation.fwd.hh"`` from ``"src/"`` folder in CGLFold package to ``"~/Rosetta/main/source/src/protocols/abinitio/"`` folder in Rosetta. Copy and paste configuration file ``"protocols_b_6.src.settings"`` from ``"src/"`` folder in CGLFold package to ``"~/Rosetta/main/source/src/"`` folder in Rosetta.
 
 - Compile Rosetta source code using the following commands:
 
@@ -57,7 +57,7 @@ Output files of CGLFold are stored in the ``"example/output_files/"`` folder, in
 ## 4. EXAMPLE
 Please follow the below steps to run CGLFold:
 
-- Go to the ``"example/"``folder of CGLFold.
+- Go to the ``"example/"`` folder of CGLFold.
   
 - Run CGLFold with the following command:
   
