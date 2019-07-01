@@ -57,7 +57,7 @@ Output files of CGLFold are stored in the ``"example/output_files/"`` folder, in
 ## 4. EXAMPLE
 Please follow the below steps to run CGLFold:
 
-- Go to the ``"example/"``folder of CGLFold
+- Go to the ``"example/"``folder of CGLFold.
   
 - Run CGLFold with the following command:  
   
