@@ -266,7 +266,7 @@ void extractParameters(int argc, char ** argv) {
     }
     if (!rFile) {
         cout << endl;
-        cout << "#  Error! 9-mer fragment library File must be provided" << endl << endl;
+        cout << "#  Error! rosetta executable File must be provided" << endl << endl;
         exit(0);
     }
 }
