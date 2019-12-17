@@ -33,16 +33,17 @@ and extract it to ``"~/"`` directory.
 - If you want to recompile CGLFold source code, use the following commands:
 
 ```
- $ cd ~/CONFold/
+ $ cd ~/CGLFold/
  $ g++ -o bin/CGLFold src/CGLFold.cpp
 ```
 ## 2. INPUT
-CGLFold requires four files to generate models:
+CGLFold requires five files to generate models:
 
-	-f	fasta			: fasta file
-	-c	cmap			: contact map file
-	-frag3	3mer_fragment_library	: fragment library with fragment lenth 3
-	-frag9	9mer_fragment_library	: fragment library with fragment lenth 9
+	-f	fasta			 : fasta file
+	-c	cmap			 : contact map file
+	-frag3	3mer_fragment_library 	 : fragment library with fragment lenth 3
+	-frag9	9mer_fragment_library	 : fragment library with fragment lenth 9
+	-rosetta rosetta executable file : executable file of ClassicAbinitio protocol of Rosetta
 
 ## 3. OUTPUT
 Output files of CGLFold are stored in the ``"example/output_files/"`` folder, including five predicted model (model_X.pdb) and the filtered contact map.
@@ -62,7 +63,7 @@ Please follow the below steps to run CGLFold:
 - Run CGLFold with the following command:
   
 ```
-   $ ./../bin/CGLFold -f ./input_files/fasta.txt -c input_files/contact.txt -frag3 input_files/3mer_fragment_library -frag9 input_files/9mer_fragment_library
+      $ ./../bin/CGLFold -f ./input_files/fasta.txt -c input_files/contact.txt -frag3 input_files/3mer_fragment_library -frag9 input_files/9mer_fragment_library -rosetta ~/rosetta_src_2018.33.60351_bundle/main/source/bin/AbinitioRelax.linuxgccrelease
 ```
 
 - Five models and the filtered contact map are generated in the ``"output_files/"`` folder.
