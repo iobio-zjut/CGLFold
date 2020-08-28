@@ -106,23 +106,17 @@
 //#include<unordered_map>
 #include<set>
 #include<math.h>
-///@brief make_pair头文件 pair
+
 #include<utility>
 
 #include <numeric/random/random.hh>
-///@brief 产生随机数
 #include<stdlib.h>
 #include<time.h>
-///@brief 计算rmsd的函数所在的头文件
 #include <core/scoring/rms_util.hh>
-///@brief 控制输出格式
 #include<iomanip>
-///@brief 读取天然态蛋白质
 #include <core/import_pose/import_pose.hh>
 #include <basic/options/keys/in.OptionKeys.gen.hh>
-///@brief 输出pdb文件
 #include <basic/options/keys/out.OptionKeys.gen.hh>
-///@brief 计算二级结构元素的距离
 //#include <core/pose/Pose.hh>
 #include <core/conformation/Residue.hh>
 #include <core/chemical/Atom.hh>
@@ -447,7 +441,7 @@ ClassicAbinitio::Contact_score(core::pose::Pose& pose){
 		}
 		
 		if ( distance <= 3.8 )
-			Cscore += pow(8.0, (3.8 - distance) );
+			Cscore += pow(8.0, confidence) * (3.8 - distance);
 		else if (distance <= 8)
 			Cscore += -pow(8.0, confidence);
 		else
@@ -485,7 +479,6 @@ ClassicAbinitio::boltzmann_accept(Real const& targetEnergy, Real const& trialEne
 
 bool 
 ClassicAbinitio::boltzmann_accept(const Real& targetEnergy, const Real& trialEnergy, const Real& recipocal_KT){
-	/// recipocal_KT = 1 / KT
 	if ( trialEnergy <= targetEnergy )
 		return true;
 	else{
@@ -526,7 +519,7 @@ ClassicAbinitio::Output_SPICKER_All_Data(core::pose::Pose& pose, const Real& ene
 }
 
 void 
-ClassicAbinitio::SPICKER_Demand_All(core::pose::Pose& nativePose){
+ClassicAbinitio::SPICKER_Demand_All(core::pose::Pose& pose){
 	SPICKER_All_Data.close();
   
 	ofstream tra("./output_files/SPICKER_data/tra.in");
@@ -543,25 +536,9 @@ ClassicAbinitio::SPICKER_Demand_All(core::pose::Pose& nativePose){
 	ofstream seq("./output_files/SPICKER_data/seq.dat");
 	for (Size r = 1; r <= proteinLength; ++r)
 		seq << right << setw(5) << r 
-		    << right << setw(6) << nativePose.residue(r).name3() 
+		    << right << setw(6) << pose.residue(r).name3() 
 		    << endl;
 	seq.close();
-	
-	ofstream CA("./output_files/SPICKER_data/CA");
-	for (Size r = 1; r <= proteinLength; ++r){
-		numeric::xyzVector<Real> CA_ = nativePose.residue(r).xyz("CA");
-	  
-		CA << "ATOM"
-		  << right << setw(7) << r
-		  << right << setw(4) << "CA"
-		  << right << setw(5) << nativePose.residue(r).name3()
-		  << right << setw(6) << r
-		  << right << setw(12) << CA_.x()
-		  << right << setw(8) << CA_.y()
-		  << right << setw(8) << CA_.z()
-		  << endl;
-	}
-	CA.close();
 }
 
 vector< core::pose::Pose > 
@@ -596,7 +573,6 @@ ClassicAbinitio::generate_population(const Size& population_size){
 			ConstraintSetOP orig_constraints(NULL);
 			orig_constraints = init_pose.constraint_set()->clone();
 			
-///=======================================用户添加程序=====================================================================
 			for (Size i = 0; i < population_size; ++i){
 			    core::pose::Pose new_pose( init_pose );
 			    mc_->reset( new_pose );
@@ -604,7 +580,7 @@ ClassicAbinitio::generate_population(const Size& population_size){
 			    recover_low( new_pose, STAGE_1 );
 			    population.push_back(new_pose);
 			}
-///======================================================================================================================
+			
 			if ( tr.Info.visible() ) current_scorefxn().show( tr, init_pose );
 			mc().show_counters();
 			total_trials_+=mc().total_trials();
@@ -652,13 +628,12 @@ ClassicAbinitio::generate_population(const Size& population_size){
 			ConstraintSetOP orig_constraints(NULL);
 			orig_constraints = init_pose.constraint_set()->clone();	
 			
-///=======================================用户添加程序===============================stage2================================
 			for (Size i = 0; i < NP_; ++i){
 				mc_->reset( population[i] );
 				success = do_stage2_cycles( population[i] );
 				recover_low( population[i], STAGE_2 );
 			}
-///======================================================================================================================                 
+			
 			if  ( tr.visible() ) current_scorefxn().show( tr, init_pose );
 			mc().show_counters();
 			total_trials_+=mc().total_trials();
@@ -696,8 +671,6 @@ ClassicAbinitio::calculate_population_energy(vector< core::pose::Pose >& populat
 			population_energy.push_back(TrialEnergy);
 		}
 		else{
-		//	cout << "The TrialPose is Similar to The Pose in Population!!!" << endl;
- 		//	cout << "Restarting a New Trajectory :" << endl;
 			bool flag = false;
 			while ( !flag ){
 				core::pose::Pose new_pose( generate_a_new_pose() );
@@ -735,7 +708,6 @@ ClassicAbinitio::generate_a_new_pose(){
 			cout << "ERROR!!!\n" << "ERROR : prepare_stage1 failed!!!\n" << "ERROR!!!" << endl;
 			exit(0);
 		}
-	//	stage3_to_stage4 = false;
 		success = do_stage1_cycles( new_pose );
 		recover_low( new_pose, STAGE_1 );
 		
@@ -750,7 +722,6 @@ ClassicAbinitio::generate_a_new_pose(){
 			cout << "ERROR!!!\n" << "ERROR : prepare_stage2 failed!!!\n" << "ERROR!!!" << endl;
 			exit(0);
 		}
-	//	stage3_to_stage4 = true;
 		success = do_stage2_cycles( new_pose );
 		recover_low( new_pose, STAGE_2 );
 		
@@ -911,52 +882,57 @@ ClassicAbinitio::Local_search(vector< core::pose::Pose >& population, vector< Re
 		///@note rotation point set
 		vector<vector<Real> > targetPoints_CA;
 		for (Size r = loopEnd + 1; r <= proteinLength; ++r){
-		    numeric::xyzVector<Real> CA = population[i].residue(r).xyz("CA");
-		    vector<Real> cordinate;
-		    cordinate.push_back( CA.x() );
-		    cordinate.push_back( CA.y() );
-		    cordinate.push_back( CA.z() );
-		    
-		    targetPoints_CA.push_back( cordinate );
+			numeric::xyzVector<Real> CA = population[i].residue(r).xyz("CA");
+			vector<Real> cordinate;
+			cordinate.push_back( CA.x() );
+			cordinate.push_back( CA.y() );
+			cordinate.push_back( CA.z() );
+			
+			targetPoints_CA.push_back( cordinate );
 		}
 		///@note rotation axis set
-		vector<vector<Real> > rotationAxis;
+		vector<pair<vector<Real>, vector<Real> > > rotationAxis;
 		bool add_a_angle = true;
 		if ( add_a_angle ){
-		    numeric::xyzVector<Real> CA = population[i].residue(loopBegin - 1).xyz("CA");
-		    numeric::xyzVector<Real> C = population[i].residue(loopBegin - 1).atom("C").xyz();
-		    vector<double> axis;
-		    double x = (C.x() - CA.x()) / sqrt( pow((C.x() - CA.x()), 2) + pow((C.y() - CA.y()), 2) + pow((C.z() - CA.z()), 2));
-		    double y = (C.y() - CA.y()) / sqrt( pow((C.x() - CA.x()), 2) + pow((C.y() - CA.y()), 2) + pow((C.z() - CA.z()), 2));
-		    double z = (C.z() - CA.z()) / sqrt( pow((C.x() - CA.x()), 2) + pow((C.y() - CA.y()), 2) + pow((C.z() - CA.z()), 2));
-		    axis.push_back(x);
-		    axis.push_back(y);
-		    axis.push_back(z);
-		    rotationAxis.push_back(axis);
+			numeric::xyzVector<Real> CA = population[i].residue(loopBegin - 1).xyz("CA");
+			numeric::xyzVector<Real> C = population[i].residue(loopBegin - 1).atom("C").xyz();
+			vector<double> axis;
+			double x = (C.x() - CA.x()) / sqrt( pow((C.x() - CA.x()), 2) + pow((C.y() - CA.y()), 2) + pow((C.z() - CA.z()), 2));
+			double y = (C.y() - CA.y()) / sqrt( pow((C.x() - CA.x()), 2) + pow((C.y() - CA.y()), 2) + pow((C.z() - CA.z()), 2));
+			double z = (C.z() - CA.z()) / sqrt( pow((C.x() - CA.x()), 2) + pow((C.y() - CA.y()), 2) + pow((C.z() - CA.z()), 2));
+			axis.push_back(x);
+			axis.push_back(y);
+			axis.push_back(z);
+			
+			vector<double> point = {CA.x(), CA.y(), CA.z()};
+		    
+			rotationAxis.push_back( make_pair(axis, point) );
 		}
 		
 		for (Size r = loopBegin; r <= loopEnd; ++r){
-		    numeric::xyzVector<Real> N = population[i].residue(r).atom("N").xyz();
-		    numeric::xyzVector<Real> CA = population[i].residue(r).xyz("CA");
-		    numeric::xyzVector<Real> C = population[i].residue(r).atom("C").xyz();
-		    
-		    vector<double> axis_1;
-		    double x_1 = (CA.x() - N.x()) / sqrt( pow((CA.x() - N.x()), 2) + pow((CA.y() - N.y()), 2) + pow((CA.z() - N.z()), 2));
-		    double y_1 = (CA.y() - N.y()) / sqrt( pow((CA.x() - N.x()), 2) + pow((CA.y() - N.y()), 2) + pow((CA.z() - N.z()), 2));
-		    double z_1 = (CA.z() - N.z()) / sqrt( pow((CA.x() - N.x()), 2) + pow((CA.y() - N.y()), 2) + pow((CA.z() - N.z()), 2));
-		    axis_1.push_back(x_1);
-		    axis_1.push_back(y_1);
-		    axis_1.push_back(z_1);
-		    rotationAxis.push_back(axis_1);
-		    
-		    vector<double> axis_2;
-		    double x_2 = (C.x() - CA.x()) / sqrt( pow((C.x() - CA.x()), 2) + pow((C.y() - CA.y()), 2) + pow((C.z() - CA.z()), 2));
-		    double y_2 = (C.y() - CA.y()) / sqrt( pow((C.x() - CA.x()), 2) + pow((C.y() - CA.y()), 2) + pow((C.z() - CA.z()), 2));
-		    double z_2 = (C.z() - CA.z()) / sqrt( pow((C.x() - CA.x()), 2) + pow((C.y() - CA.y()), 2) + pow((C.z() - CA.z()), 2));
-		    axis_2.push_back(x_2);
-		    axis_2.push_back(y_2);
-		    axis_2.push_back(z_2);
-		    rotationAxis.push_back(axis_2);
+			numeric::xyzVector<Real> N = population[i].residue(r).atom("N").xyz();
+			numeric::xyzVector<Real> CA = population[i].residue(r).xyz("CA");
+			numeric::xyzVector<Real> C = population[i].residue(r).atom("C").xyz();
+			
+			vector<double> axis_1;
+			double x_1 = (CA.x() - N.x()) / sqrt( pow((CA.x() - N.x()), 2) + pow((CA.y() - N.y()), 2) + pow((CA.z() - N.z()), 2));
+			double y_1 = (CA.y() - N.y()) / sqrt( pow((CA.x() - N.x()), 2) + pow((CA.y() - N.y()), 2) + pow((CA.z() - N.z()), 2));
+			double z_1 = (CA.z() - N.z()) / sqrt( pow((CA.x() - N.x()), 2) + pow((CA.y() - N.y()), 2) + pow((CA.z() - N.z()), 2));
+			axis_1.push_back(x_1);
+			axis_1.push_back(y_1);
+			axis_1.push_back(z_1);
+			vector<double> point_1 = {N.x(), N.y(), N.z()};
+			rotationAxis.push_back(make_pair(axis_1,point_1));
+			
+			vector<double> axis_2;
+			double x_2 = (C.x() - CA.x()) / sqrt( pow((C.x() - CA.x()), 2) + pow((C.y() - CA.y()), 2) + pow((C.z() - CA.z()), 2));
+			double y_2 = (C.y() - CA.y()) / sqrt( pow((C.x() - CA.x()), 2) + pow((C.y() - CA.y()), 2) + pow((C.z() - CA.z()), 2));
+			double z_2 = (C.z() - CA.z()) / sqrt( pow((C.x() - CA.x()), 2) + pow((C.y() - CA.y()), 2) + pow((C.z() - CA.z()), 2));
+			axis_2.push_back(x_2);
+			axis_2.push_back(y_2);
+			axis_2.push_back(z_2);
+			vector<double> point_2 = {CA.x(), CA.y(), CA.z()};
+			rotationAxis.push_back(make_pair(axis_2,point_2));
 		}
 		///@note disturbance angles search
 		LJAR->rotation_parameters(targetPoints_CA, rotationAxis);
