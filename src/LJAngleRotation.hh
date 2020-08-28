@@ -19,8 +19,6 @@ class LJAngleRotation {
 public:
 	LJAngleRotation() {};
 	
-	void init(vector<vector<Real> > &init_points, vector<vector<Real> > &rotation_axis);
-	
 	void get_parameters(map<string,Real> &parametersMap);
 	
 	void rotation(vector<Real> &rotationAngles);
@@ -37,15 +35,15 @@ public:
 		return rotationAxis.size();
 	};
 	
-	void rotation_parameters(vector<vector<Real> > &init_points, vector<vector<Real> > &rotation_axis);
+	void rotation_parameters(vector<vector<Real> > &init_points, vector<pair<vector<Real>, vector<Real> > > &rotation_axis);
   
 private:
-	///@note 旋转点的坐标集
+	
 	vector<vector<Real> > targetPoints;
-	///@note 旋转点的初始坐标集
+	
 	vector<vector<Real> > initPoints;
-	///@note 旋转轴集
-	vector<vector<Real> > rotationAxis;
+	
+	vector<pair<vector<Real>, vector<Real> > > rotationAxis;
 	
 private:
 	Size NP2;
@@ -54,15 +52,13 @@ private:
 	Real CR;
 	Real KTl;
 	Real KT_reciprocal;
-//	Real Driver_Angle;
 	Real Max_Disturbance;
 	Real Use_best;
 	Size N_Candidate;
 	Real Greedy_strategy;
-//	Size Convergence_G;
 	
 public:
-	///@brief 相似性判断函数，作为泛型算法 find_if 的谓词
+	
 	static Real TrialScore;
 	static bool isSimilar(Real &score){
 		return ( fabs(score - TrialScore) < 0.00001 );
