@@ -22,14 +22,7 @@ namespace abinitio {
 Real LJAngleRotation::TrialScore = 0.0;
 
 void 
-LJAngleRotation::init(vector< vector< Real > >& init_points, vector< vector< Real > >& rotation_axis){
-	initPoints = init_points;
-	rotationAxis = rotation_axis;
-//	read_parameters();
-}
-
-void 
-LJAngleRotation::rotation_parameters(vector< vector< Real > >& init_points, vector< vector< Real > >& rotation_axis){
+LJAngleRotation::rotation_parameters(vector< vector< Real > >& init_points, vector<pair<vector<Real>, vector<Real> > >& rotation_axis){
 	initPoints = init_points;
 	rotationAxis = rotation_axis;
 }
@@ -142,27 +135,10 @@ LJAngleRotation::angle_learning(){
 					success = true;
 			}
 			if ( success ){
-			//	++accept_num;
 				TrialScore = trialScore;
 				if ( find_if(Population_Energys.begin(), Population_Energys.end(), isSimilar) == Population_Energys.end() ){
 					Population_Angles[p] = Cross_Angles;
 					Population_Energys[p] = trialScore;
-				}
-				else{
-					while ( 1 ){
-						vector<Real> Angles;
-						for (Size d = 0; d < Angle_Dimensions; ++d){
-							Angles.push_back( numeric::random::rg().uniform() * 2 *Max_Disturbance - Max_Disturbance );
-						}
-						TrialScore = score( Angles );
-						if ( find_if(Population_Energys.begin(), Population_Energys.end(), isSimilar) == Population_Energys.end() ){
-							Population_Angles[p] = Angles;
-							Population_Energys[p] = TrialScore;
-							
-							break;
-						}
-					}
-					  
 				}
 			}
 			else{
@@ -170,26 +146,10 @@ LJAngleRotation::angle_learning(){
 					
 					Size biggest_index( distance(Population_Energys.begin(), max_element( Population_Energys.begin(), Population_Energys.end() ) ) );
 					if ( trialScore < Population_Energys[biggest_index] ){
-					//	++accept_num;
 						TrialScore = trialScore;
 						if ( find_if(Population_Energys.begin(), Population_Energys.end(), isSimilar) == Population_Energys.end() ){
 							Population_Angles[biggest_index] = Cross_Angles;
 							Population_Energys[biggest_index] = trialScore;
-						}
-						else{
-							while ( 1 ){
-								vector<Real> Angles;
-								for (Size d = 0; d < Angle_Dimensions; ++d){
-									Angles.push_back( numeric::random::rg().uniform() * 2 *Max_Disturbance - Max_Disturbance );
-								}
-								TrialScore = score( Angles );
-								if ( find_if(Population_Energys.begin(), Population_Energys.end(), isSimilar) == Population_Energys.end() ){
-									Population_Angles[biggest_index] = Angles;
-									Population_Energys[biggest_index] = TrialScore;
-									
-									break;
-								}
-							} 
 						}
 					}
 				}
@@ -237,38 +197,61 @@ LJAngleRotation::rotation(std::vector<Real>& rotationAngles){
 	vector<vector<Real> > Matrix_rotation(3, vector<Real>(3, 0));
 	for (Size i = 0; i < rotationAxis.size(); ++i){
 		///@note axis
-		Real x( rotationAxis[i][0] );
-		Real y( rotationAxis[i][1] );
-		Real z( rotationAxis[i][2] );
+		Real x( rotationAxis[i].first[0] );
+		Real y( rotationAxis[i].first[1] );
+		Real z( rotationAxis[i].first[2] );
+		
+		Real a( rotationAxis[i].second[0] );
+		Real b( rotationAxis[i].second[1] );
+		Real c( rotationAxis[i].second[2] );
 		///@note angle
-		Real angle( rotationAngles[i] * 3.14159 / 180 );
+		Real angle( rotationAngles[i] * M_PI / 180 );
+		
 		///@note matrix
-		vector<vector<Real> > matrix(3, vector<Real>(3, 0));
-		matrix[0][0] = x*x*(1 - cos(angle)) + cos(angle);
+		vector<vector<Real> > matrix(4, vector<Real>(4, 0));
+		matrix[0][0] = x*x + (y*y + z*z)*cos(angle); 
 		matrix[0][1] = x*y*(1 - cos(angle)) - z*sin(angle);
 		matrix[0][2] = x*z*(1 - cos(angle)) + y*sin(angle);
+		matrix[0][3] = (a*(y*y + z*z) - x*(b*y + c*z))*(1 - cos(angle)) + (b*z - c*y)*sin(angle);
+		
 		matrix[1][0] = x*y*(1 - cos(angle)) + z*sin(angle);
-		matrix[1][1] = y*y*(1 - cos(angle)) + cos(angle);
+		matrix[1][1] = y*y + (x*x + z*z)*cos(angle); 
 		matrix[1][2] = y*z*(1 - cos(angle)) - x*sin(angle);
+		matrix[1][3] = (b*(x*x + z*z) - y*(a*x + c*z))*(1 - cos(angle)) + (c*x - a*z)*sin(angle);
+		
 		matrix[2][0] = x*z*(1 - cos(angle)) - y*sin(angle);
 		matrix[2][1] = y*z*(1 - cos(angle)) + x*sin(angle);
-		matrix[2][2] = z*z*(1 - cos(angle)) + cos(angle);
+		matrix[2][2] = z*z + (x*x + y*y)*cos(angle);
+		matrix[2][3] = (c*(x*x + y*y) - z*(a*x + b*y))*(1 - cos(angle)) + (a*y - b*x)*sin(angle);
+		
+		matrix[3][0] = 0;
+		matrix[3][1] = 0;
+		matrix[3][2] = 0;
+		matrix[3][3] = 1;
 		
 		if ( i == 0 )
 			Matrix_rotation = matrix;
 		else{
-			vector<vector<Real> > new_matrix(3, vector<Real>(3, 0));
-			new_matrix[0][0] = Matrix_rotation[0][0] * matrix[0][0] + Matrix_rotation[0][1] * matrix[1][0] + Matrix_rotation[0][2] * matrix[2][0];
-			new_matrix[0][1] = Matrix_rotation[0][0] * matrix[0][1] + Matrix_rotation[0][1] * matrix[1][1] + Matrix_rotation[0][2] * matrix[2][1];
-			new_matrix[0][2] = Matrix_rotation[0][0] * matrix[0][2] + Matrix_rotation[0][1] * matrix[1][2] + Matrix_rotation[0][2] * matrix[2][2];
+			vector<vector<Real> > new_matrix(4, vector<Real>(4, 0));
+			new_matrix[0][0] = Matrix_rotation[0][0] * matrix[0][0] + Matrix_rotation[0][1] * matrix[1][0] + Matrix_rotation[0][2] * matrix[2][0] + Matrix_rotation[0][3] * matrix[3][0];
+			new_matrix[0][1] = Matrix_rotation[0][0] * matrix[0][1] + Matrix_rotation[0][1] * matrix[1][1] + Matrix_rotation[0][2] * matrix[2][1] + Matrix_rotation[0][3] * matrix[3][1];
+			new_matrix[0][2] = Matrix_rotation[0][0] * matrix[0][2] + Matrix_rotation[0][1] * matrix[1][2] + Matrix_rotation[0][2] * matrix[2][2] + Matrix_rotation[0][3] * matrix[3][2];
+			new_matrix[0][3] = Matrix_rotation[0][0] * matrix[0][3] + Matrix_rotation[0][1] * matrix[1][3] + Matrix_rotation[0][2] * matrix[2][3] + Matrix_rotation[0][3] * matrix[3][3];
 			
-			new_matrix[1][0] = Matrix_rotation[1][0] * matrix[0][0] + Matrix_rotation[1][1] * matrix[1][0] + Matrix_rotation[1][2] * matrix[2][0];
-			new_matrix[1][1] = Matrix_rotation[1][0] * matrix[0][1] + Matrix_rotation[1][1] * matrix[1][1] + Matrix_rotation[1][2] * matrix[2][1];
-			new_matrix[1][2] = Matrix_rotation[1][0] * matrix[0][2] + Matrix_rotation[1][1] * matrix[1][2] + Matrix_rotation[1][2] * matrix[2][2];
+			new_matrix[1][0] = Matrix_rotation[1][0] * matrix[0][0] + Matrix_rotation[1][1] * matrix[1][0] + Matrix_rotation[1][2] * matrix[2][0] + Matrix_rotation[1][3] * matrix[3][0];
+			new_matrix[1][1] = Matrix_rotation[1][0] * matrix[0][1] + Matrix_rotation[1][1] * matrix[1][1] + Matrix_rotation[1][2] * matrix[2][1] + Matrix_rotation[1][3] * matrix[3][1];
+			new_matrix[1][2] = Matrix_rotation[1][0] * matrix[0][2] + Matrix_rotation[1][1] * matrix[1][2] + Matrix_rotation[1][2] * matrix[2][2] + Matrix_rotation[1][3] * matrix[3][2];
+			new_matrix[1][3] = Matrix_rotation[1][0] * matrix[0][3] + Matrix_rotation[1][1] * matrix[1][3] + Matrix_rotation[1][2] * matrix[2][3] + Matrix_rotation[1][3] * matrix[3][3];
 			
-			new_matrix[2][0] = Matrix_rotation[2][0] * matrix[0][0] + Matrix_rotation[2][1] * matrix[1][0] + Matrix_rotation[2][2] * matrix[2][0];
-			new_matrix[2][1] = Matrix_rotation[2][0] * matrix[0][1] + Matrix_rotation[2][1] * matrix[1][1] + Matrix_rotation[2][2] * matrix[2][1];
-			new_matrix[2][2] = Matrix_rotation[2][0] * matrix[0][2] + Matrix_rotation[2][1] * matrix[1][2] + Matrix_rotation[2][2] * matrix[2][2];
+			new_matrix[2][0] = Matrix_rotation[2][0] * matrix[0][0] + Matrix_rotation[2][1] * matrix[1][0] + Matrix_rotation[2][2] * matrix[2][0] + Matrix_rotation[2][3] * matrix[3][0];
+			new_matrix[2][1] = Matrix_rotation[2][0] * matrix[0][1] + Matrix_rotation[2][1] * matrix[1][1] + Matrix_rotation[2][2] * matrix[2][1] + Matrix_rotation[2][3] * matrix[3][1];
+			new_matrix[2][2] = Matrix_rotation[2][0] * matrix[0][2] + Matrix_rotation[2][1] * matrix[1][2] + Matrix_rotation[2][2] * matrix[2][2] + Matrix_rotation[2][3] * matrix[3][2];
+			new_matrix[2][3] = Matrix_rotation[2][0] * matrix[0][3] + Matrix_rotation[2][1] * matrix[1][3] + Matrix_rotation[2][2] * matrix[2][3] + Matrix_rotation[2][3] * matrix[3][3];
+				
+			new_matrix[3][0] = Matrix_rotation[3][0] * matrix[0][0] + Matrix_rotation[3][1] * matrix[1][0] + Matrix_rotation[3][2] * matrix[2][0] + Matrix_rotation[3][3] * matrix[3][0];
+			new_matrix[3][1] = Matrix_rotation[3][0] * matrix[0][1] + Matrix_rotation[3][1] * matrix[1][1] + Matrix_rotation[3][2] * matrix[2][1] + Matrix_rotation[3][3] * matrix[3][1];
+			new_matrix[3][2] = Matrix_rotation[3][0] * matrix[0][2] + Matrix_rotation[3][1] * matrix[1][2] + Matrix_rotation[3][2] * matrix[2][2] + Matrix_rotation[3][3] * matrix[3][2];
+			new_matrix[3][3] = Matrix_rotation[3][0] * matrix[0][3] + Matrix_rotation[3][1] * matrix[1][3] + Matrix_rotation[3][2] * matrix[2][3] + Matrix_rotation[3][3] * matrix[3][3];
 			
 			Matrix_rotation = new_matrix;
 		}
@@ -280,10 +263,10 @@ LJAngleRotation::rotation(std::vector<Real>& rotationAngles){
 		Real z_old( targetPoints[j][2] );
 		
 		///@note rotation
-		Real x_new( Matrix_rotation[0][0] * x_old + Matrix_rotation[0][1] * y_old + Matrix_rotation[0][2] * z_old );
-		Real y_new( Matrix_rotation[1][0] * x_old + Matrix_rotation[1][1] * y_old + Matrix_rotation[1][2] * z_old );
-		Real z_new( Matrix_rotation[2][0] * x_old + Matrix_rotation[2][1] * y_old + Matrix_rotation[2][2] * z_old );
-		
+		Real x_new( Matrix_rotation[0][0] * x_old + Matrix_rotation[0][1] * y_old + Matrix_rotation[0][2] * z_old + Matrix_rotation[0][3] * 1);
+		Real y_new( Matrix_rotation[1][0] * x_old + Matrix_rotation[1][1] * y_old + Matrix_rotation[1][2] * z_old + Matrix_rotation[1][3] * 1);
+		Real z_new( Matrix_rotation[2][0] * x_old + Matrix_rotation[2][1] * y_old + Matrix_rotation[2][2] * z_old + Matrix_rotation[2][3] * 1);
+		      
 		targetPoints[j][0] = x_new;
 		targetPoints[j][1] = y_new;
 		targetPoints[j][2] = z_new;
