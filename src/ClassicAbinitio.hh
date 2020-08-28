@@ -503,8 +503,6 @@ private:
 	
 	
 	void Output_last_generation(vector<core::pose::Pose> &population, vector<Real> &population_energy, vector<Real> &population_Cscore);
-//	void Output_pdb_Global(vector<core::pose::Pose> &population);
-//	void Output_pdb_Local(vector<core::pose::Pose> &population);
 	
 	void Output_SPICKER_All_Data(core::pose::Pose &pose, Real const &energy);
 	void SPICKER_Demand_All(core::pose::Pose &nativePose);
@@ -525,17 +523,11 @@ private:
 	Size frag_;
 	Real KTc_;
 	bool Only_Global_;
-//	bool Only_Local_;
-	
 	map<string,Real> parametersMap;
 	
 	Size Global_Selection_Mode_;
 	Size Local_Selection_Mode_;
 	
-//	Size Convergence_Length_E_;
-//	Size Convergence_Length_C_;
-//	Size Convergence_bias_E_;
-//	Size Convergence_bias_C_;
 	
 	///@note Spicker paramters for all accept points 
 	ofstream SPICKER_All_Data;
@@ -555,7 +547,6 @@ private:
 	simple_moves::FragmentMoverOP FragAssem_;
 	
 public:	
-	///@brief 相似性判断函数，作为泛型算法 find_if 的谓词
 	static Real TrialEnergy;
 	static bool isSimilar(Real &energy){
 		return ( fabs(energy - TrialEnergy) < 0.00001 );
