@@ -194,7 +194,7 @@ LJAngleRotation::rotation(std::vector<Real>& rotationAngles){
 	targetPoints = initPoints;
 	
 	///@brief Matrix of rotation
-	vector<vector<Real> > Matrix_rotation(3, vector<Real>(3, 0));
+	vector<vector<Real> > Matrix_rotation(4, vector<Real>(4, 0));
 	for (Size i = 0; i < rotationAxis.size(); ++i){
 		///@note axis
 		Real x( rotationAxis[i].first[0] );
